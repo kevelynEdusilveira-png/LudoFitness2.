@@ -26,17 +26,19 @@ jobs:
         with:
           gradle-version: '8.7'
 
+      
       - name: Find Android project
         run: |
-          if [ -f "settings.gradle" ] || [ -f "settings.gradle.kts" ]; then
+          if [ -f "app/build.gradle" ] || [ -f "app/build.gradle.kts" ]; then
             echo "PROJECT_DIR=." >> "$GITHUB_ENV"
-          elif [ -f "LudoFitnessAndroid/settings.gradle" ] || [ -f "LudoFitnessAndroid/settings.gradle.kts" ]; then
+          elif [ -f "LudoFitnessAndroid/app/build.gradle" ] || [ -f "LudoFitnessAndroid/app/build.gradle.kts" ]; then
             echo "PROJECT_DIR=LudoFitnessAndroid" >> "$GITHUB_ENV"
           else
-            echo "Android project settings.gradle not found"
-            find . -maxdepth 4 \( -name settings.gradle -o -name settings.gradle.kts \) -print
+            echo "Android app folder not found"
+            find . -maxdepth 5 \( -name AndroidManifest.xml -o -name build.gradle -o -name build.gradle.kts \) -print
             exit 1
           fi
+
 
       - name: Build APK
         run: |
