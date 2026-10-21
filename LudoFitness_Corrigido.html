@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#101827">
+<title>Ludo Fitness</title>
+<style>
+:root{--bg:#101827;--panel:#1c2739;--ink:#f7fafc;--muted:#b8c4d6;--red:#ef4444;--blue:#1687e8;--green:#16a34a;--yellow:#facc15}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#0b1220,#17243a);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:18px 16px 10px;text-align:center}h1{margin:0;font-size:clamp(27px,7vw,38px);letter-spacing:.5px}header p{margin:5px 0;color:var(--muted);font-size:14px}
+main{max-width:760px;margin:auto;padding:10px 12px 28px}.panel{background:#1c2739;border:1px solid #344158;border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:0 8px 24px #0002}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.teams{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.team{border-radius:12px;padding:10px 4px;text-align:center;font-weight:800;font-size:12px;border:2px solid transparent}.team.active{border-color:white;box-shadow:0 0 0 2px #ffffff45}.dot{display:block;margin:0 auto 5px;width:18px;height:18px;border-radius:50%;background:currentColor}.red{color:var(--red)}.blue{color:var(--blue)}.green{color:#4ade80}.yellow{color:var(--yellow)}
+.board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;max-width:560px;margin:auto}.cell{aspect-ratio:1;border-radius:8px;background:#344158;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;font-size:clamp(10px,2.7vw,15px);font-weight:800;border:1px solid #ffffff17;min-width:0}.cell.path{background:#e7edf5;color:#1a2638}.cell.exercise{background:#20a66a;color:#fff}.cell.question{background:#facc15;color:#172033}.cell.surprise{background:#ef4444;color:white}.cell.finish{background:#8b5cf6;color:white}.cell .num{position:absolute;top:2px;left:4px;font-size:9px;opacity:.65}.tokens{display:flex;gap:2px;flex-wrap:wrap;justify-content:center}.token{width:15px;height:15px;border:2px solid white;border-radius:50%;box-shadow:0 1px 3px #0005}.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:stretch}.dice{display:flex;align-items:center;justify-content:center;gap:12px;background:#111b2b;border-radius:14px;padding:12px}.die{font-size:42px;line-height:1}.btn{border:0;border-radius:12px;padding:13px 15px;font-weight:800;font-size:15px;cursor:pointer;background:#facc15;color:#182033}.btn.secondary{background:#344158;color:white}.btn:disabled{opacity:.45;cursor:not-allowed}.status{font-weight:800;margin:0 0 5px}.small{font-size:13px;color:var(--muted);margin:0}.log{font-size:13px;line-height:1.5;max-height:100px;overflow:auto;color:#dce5f2}.modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:18px;z-index:5}.modal.show{display:flex}.modalbox{width:min(440px,100%);background:#1c2739;border:1px solid #53627b;border-radius:20px;padding:22px}.modalbox h2{margin:0 0 8px}.modalbox p{line-height:1.45}.answers{display:grid;gap:8px}.answers button{background:#344158;color:white;text-align:left;border:1px solid #53627b;border-radius:10px;padding:12px;font-size:15px}.note{font-size:12px;color:#aebbd0;text-align:center;margin-top:12px}
+@media(min-width:600px){.layout{display:grid;grid-template-columns:1.1fr .9fr;gap:12px;align-items:start}.layout .panel{margin-bottom:12px}}
+</style>
+</head>
+<body>
+<header><h1>🏃 LUDO FITNESS</h1><p>Raciocínio, movimento e diversão</p></header>
+<main>
+<div class="panel">
+ <div class="row" style="justify-content:space-between;margin-bottom:10px"><strong>Equipes</strong><span class="small">4 equipes • 4 peões</span></div>
+ <div class="teams" id="teams"></div>
+</div>
+<div class="layout">
+ <section class="panel">
+  <div class="row" style="justify-content:space-between;margin-bottom:10px"><strong>Tabuleiro</strong><span class="small">Chegada: casa 24</span></div>
+  <div class="board" id="board"></div>
+  <p class="note">🟩 Exercício • 🟨 Raciocínio • 🟥 Surpresa • 🟪 Chegada</p>
+ </section>
+ <section>
+  <div class="panel">
+   <p class="status" id="turn">Vez da Equipe Vermelha</p><p class="small" id="instruction">Lance o dado para começar.</p>
+   <div class="controls" style="margin-top:12px">
+    <div class="dice"><span class="die" id="die">⚀</span><div><strong id="rollText">Dado</strong><p class="small">1 a 6</p></div></div>
+    <button class="btn" id="roll">🎲 Lançar dado</button>
+   </div>
+   <div style="margin-top:10px"><button class="btn secondary" id="next" style="width:100%" disabled>Próxima equipe →</button></div>
+  </div>
+  <div class="panel"><strong>Como jogar</strong><ol style="padding-left:20px;line-height:1.5;font-size:14px"><li>Na sua vez, lance o dado.</li><li>Avance seu peão pelo percurso.</li><li>Resolva a pergunta ou faça o exercício da casa.</li><li>Chegue à casa 24 para marcar um peão concluído.</li><li>Vence a primeira equipe a concluir os 4 peões.</li></ol><p class="small">Para simplificar a demonstração, cada equipe movimenta automaticamente o próximo peão disponível.</p></div>
+  <div class="panel"><strong>Histórico da partida</strong><div class="log" id="log">O jogo está pronto. Equipe Vermelha começa!</div></div>
+  <button class="btn secondary" id="reset" style="width:100%">↻ Reiniciar partida</button>
+ </section>
+</div>
+<p class="note">Adapte os exercícios à condição física de cada participante. Não faça movimentos que provoquem dor.</p>
+</main>
+<div class="modal" id="modal"><div class="modalbox"><h2 id="modalTitle">Desafio!</h2><p id="modalText"></p><div class="answers" id="answers"></div><button class="btn secondary" id="closeModal" style="width:100%;margin-top:10px;display:none">Continuar</button></div></div>
+<script>
+const teams=[
+ {name:"Vermelha",color:"#ef4444",pos:[0,0,0,0],done:0,css:"red"},
+ {name:"Azul",color:"#1687e8",pos:[0,0,0,0],done:0,css:"blue"},
+ {name:"Verde",color:"#16a34a",pos:[0,0,0,0],done:0,css:"green"},
+ {name:"Amarela",color:"#facc15",pos:[0,0,0,0],done:0,css:"yellow"}
+];
+const route=[0,1,2,3,4,5,6,13,20,27,34,41,48,47,46,45,44,43,42,35,28,21,14,7];
+const labels={4:["🧠","question"],9:["🏋️","exercise"],14:["❓","question"],18:["🤸","exercise"],22:["🎯","surprise"],24:["🏁","finish"]};
+const questions=[
+ {q:"Qual grupo muscular trabalha bastante no agachamento?",a:["Quadríceps e glúteos","Bíceps e tríceps","Somente antebraço"],correct:0,explain:"Quadríceps e glúteos ajudam a estender joelhos e quadris."},
+ {q:"Quanto é 12 + 5?",a:["15","17","18"],correct:1,explain:"12 + 5 = 17. Raciocínio rápido!"},
+ {q:"Por que beber água durante a atividade física?",a:["Ajuda a manter a hidratação","Substitui refeições","Impede qualquer lesão"],correct:0,explain:"A água ajuda a manter a hidratação do organismo."},
+ {q:"Qual é uma opção segura para começar a se exercitar?",a:["Adaptar a intensidade à condição física","Ignorar a dor","Prender a respiração sempre"],correct:0,explain:"A atividade deve respeitar a condição física e os limites pessoais."}
+];
+let current=0,rolled=false,roll=0,turnCount=0,gameOver=false;
+const dieFaces=["⚀","⚁","⚂","⚃","⚄","⚅"];
+const board=document.getElementById("board"),teamsEl=document.getElementById("teams");
+function makeBoard(){
+ board.innerHTML="";
+ for(let i=0;i<49;i++){
+  const cell=document.createElement("div");cell.className="cell";cell.dataset.cell=i;
+  if(route.includes(i)){let n=route.indexOf(i)+1;cell.classList.add("path");cell.innerHTML=`<span class="num">${n}</span><span>${n}</span>`;if([4,14].includes(n))cell.classList.add("question");if([9,18].includes(n))cell.classList.add("exercise");if(n===22)cell.classList.add("surprise");if(n===24)cell.classList.add("finish");}
+  else {cell.style.visibility="hidden";}
+  board.appendChild(cell);
+ }
+}
+function render(){
+ teamsEl.innerHTML="";
+ teams.forEach((t,i)=>{let el=document.createElement("div");el.className="team "+t.css+(i===current?" active":"");el.innerHTML=`<span class="dot"></span>${t.name.toUpperCase()}<br><span style="color:#fff">${t.done}/4 concluídos</span>`;teamsEl.appendChild(el)});
+ [...board.children].forEach(c=>{if(!route.includes(+c.dataset.cell))return;const n=route.indexOf(+c.dataset.cell)+1;const old=c.querySelector(".tokens");if(old)old.remove();const tokens=document.createElement("div");tokens.className="tokens";teams.forEach(t=>t.pos.forEach(p=>{if(p===n){const tok=document.createElement("span");tok.className="token";tok.style.background=t.color;tok.title=t.name;tokens.appendChild(tok)}}));c.appendChild(tokens)});
+ document.getElementById("turn").textContent=teams[current].done===4?`🏆 ${teams[current].name} venceu!`:`Vez da Equipe ${teams[current].name}`;
+ document.getElementById("instruction").textContent=rolled?"Desafio resolvido? Passe a vez para a próxima equipe.":"Lance o dado para movimentar o próximo peão.";
+ document.getElementById("roll").disabled=rolled||teams[current].done===4;
+ document.getElementById("next").disabled=!rolled||teams.some(t=>t.done===4);
+}
+function log(s){const l=document.getElementById("log");l.innerHTML=s+"<br>"+l.innerHTML}
+function modal(title,text,buttons){document.getElementById("modalTitle").textContent=title;document.getElementById("modalText").textContent=text;const a=document.getElementById("answers");a.innerHTML="";document.getElementById("closeModal").style.display="none";buttons.forEach(b=>{const btn=document.createElement("button");btn.textContent=b.text;btn.onclick=b.fn;a.appendChild(btn)});document.getElementById("modal").classList.add("show")}
+function close(){document.getElementById("modal").classList.remove("show")}
+function nextTurn(){if(gameOver)return;close();current=(current+1)%4;let tries=0;while(teams[current].done===4&&tries<4){current=(current+1)%4;tries++}rolled=false;document.getElementById("die").textContent="⚀";document.getElementById("rollText").textContent="Dado";render()}
+function solveQuestion(){
+ const q=questions[Math.floor(Math.random()*questions.length)];
+ modal("🧠 Pergunta de raciocínio",q.q,q.a.map((ans,i)=>({text:ans,fn:()=>{close();if(i===q.correct){modal("✅ Resposta correta!",q.explain,[{text:"Avançar 1 casa extra",fn:()=>{const t=teams[current],idx=t.pos.findIndex(p=>p>0&&p<24);if(idx>=0){t.pos[idx]=Math.min(24,t.pos[idx]+1);if(t.pos[idx]===24){t.done++;t.pos[idx]=0;log(t.name+" concluiu um peão com o bônus! ("+t.done+"/4)");if(t.done===4){gameOver=true;close();render();modal("🏆 Temos um vencedor!", "Parabéns, Equipe "+t.name+"! Concluiu os quatro peões.",[{text:"Ver resultado",fn:close}]);return}}}close();render();log(t.name+" acertou a pergunta e ganhou avanço extra.")}}])}else{modal("Quase!", "Resposta correta: "+q.a[q.correct]+". Continue tentando!",[{text:"Continuar",fn:()=>close()}])}}})));
+}
+function challenge(pos){
+ if(pos===4||pos===14){solveQuestion();return}
+ if(pos===9||pos===18){const ex=pos===9?"Faça 8 agachamentos, com movimento confortável e controlado.":"Faça 10 polichinelos adaptados ou 20 segundos marchando no lugar.";modal("💪 Desafio físico",ex,[{text:"Desafio concluído",fn:()=>{close();log(teams[current].name+" concluiu um desafio físico.")}},{text:"Preciso adaptar",fn:()=>{close();modal("👍 Adaptação", "Escolha uma versão leve e sem dor: 5 repetições ou 15 segundos de movimento suave.",[{text:"Fiz a versão adaptada",fn:()=>{close();log(teams[current].name+" concluiu a versão adaptada do exercício.")}}])}}]);return}
+ if(pos===22){modal("🎯 Casa surpresa","Escolha uma carta surpresa!",[{text:"Bônus: avance 1 casa",fn:()=>{const t=teams[current],idx=t.pos.findIndex(p=>p>0&&p<24);if(idx>=0){t.pos[idx]=Math.min(24,t.pos[idx]+1);if(t.pos[idx]===24){t.done++;t.pos[idx]=0;log(t.name+" concluiu um peão com o bônus! ("+t.done+"/4)");if(t.done===4){gameOver=true;close();render();modal("🏆 Temos um vencedor!", "Parabéns, Equipe "+t.name+"! Concluiu os quatro peões.",[{text:"Ver resultado",fn:close}]);return}}}close();render();log(t.name+" ganhou bônus.")}},{text:"Pausa: fique na posição",fn:()=>{close();log(teams[current].name+" ficou na posição nesta rodada.")}}])}
+}
+document.getElementById("roll").onclick=()=>{
+ if(rolled)return;roll=Math.floor(Math.random()*6)+1;rolled=true;document.getElementById("die").textContent=dieFaces[roll-1];document.getElementById("rollText").textContent="Saiu "+roll;
+ const t=teams[current];let idx=t.pos.findIndex(p=>p>0&&p<24);if(idx<0)idx=t.pos.findIndex(p=>p===0);
+ if(idx<0){log(t.name+" não tem peões disponíveis.");render();return}
+ if(t.pos[idx]===0)t.pos[idx]=Math.min(24,roll);else t.pos[idx]=Math.min(24,t.pos[idx]+roll);
+ const pos=t.pos[idx];if(pos===24){t.done++;log(t.name+" levou um peão à chegada! ("+t.done+"/4)");t.pos[idx]=0;if(t.done===4){gameOver=true;render();modal("🏆 Temos um vencedor!", "Parabéns, Equipe "+t.name+"! Concluiu os quatro peões.",[{text:"Ver resultado",fn:close}]);return}}
+ else log(t.name+" avançou "+roll+" casa(s).");
+ render();if(pos<24)challenge(pos);
+};
+document.getElementById("next").onclick=nextTurn;
+document.getElementById("closeModal").onclick=close;
+document.getElementById("reset").onclick=()=>{gameOver=false;close();teams.forEach(t=>{t.pos=[0,0,0,0];t.done=0});current=0;rolled=false;document.getElementById("die").textContent="⚀";document.getElementById("rollText").textContent="Dado";document.getElementById("log").textContent="Partida reiniciada. Equipe Vermelha começa!";render()};
+makeBoard();render();
+</script>
+</body></html>
