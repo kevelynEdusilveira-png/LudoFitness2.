@@ -26,19 +26,27 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      
-      - name: Find Android project
+      - name: Extract Android project
         run: |
-          if [ -f "app/build.gradle" ] || [ -f "app/build.gradle.kts" ]; then
-            echo "PROJECT_DIR=." >> "$GITHUB_ENV"
-          elif [ -f "LudoFitnessAndroid/app/build.gradle" ] || [ -f "LudoFitnessAndroid/app/build.gradle.kts" ]; then
-            echo "PROJECT_DIR=LudoFitnessAndroid" >> "$GITHUB_ENV"
-          else
-            echo "Android app folder not found"
-            find . -maxdepth 5 \( -name AndroidManifest.xml -o -name build.gradle -o -name build.gradle.kts \) -print
+          ZIP_FILE=$(find . -maxdepth 3 -type f -name '*.zip' -print -quit)
+          if [ -z "$ZIP_FILE" ]; then
+            echo "No ZIP file found in repository"
             exit 1
           fi
+          mkdir -p extracted
+          unzip -oq "$ZIP_FILE" -d extracted
 
+      - name: Find Android project
+        run: |
+          APP_BUILD=$(find extracted -type f \( -path '*/app/build.gradle' -o -path '*/app/build.gradle.kts' \) -print -quit)
+          if [ -z "$APP_BUILD" ]; then
+            echo "App build file not found inside ZIP"
+            find extracted -maxdepth 6 -type f -print
+            exit 1
+          fi
+          PROJECT_DIR=$(dirname "$(dirname "$APP_BUILD")")
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "Android project found at: $PROJECT_DIR"
 
       - name: Build APK
         run: |
