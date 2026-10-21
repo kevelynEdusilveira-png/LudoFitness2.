@@ -1,4 +1,27 @@
 
+      - name: Fix Java and Kotlin targets
+        run: |
+          FILE="$PROJECT_DIR/app/build.gradle.kts"
+          python3 - "$FILE" <<'PY'
+          import sys
+          from pathlib import Path
+          p = Path(sys.argv[1])
+          s = p.read_text()
+          s = s.replace(
+              '    defaultConfig {',
+              '''    compileOptions {
+              sourceCompatibility JavaVersion.VERSION_17
+              targetCompatibility JavaVersion.VERSION_17
+          }
+          kotlinOptions {
+              jvmTarget = "17"
+          }
+          defaultConfig {''',
+              1
+          )
+          p.write_text(s)
+          PY
+
 name: Build APK
 
 on:
