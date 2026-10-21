@@ -1,4 +1,4 @@
-name: Build LudoFitness APK
+[23:05, 20/10/2026] Keh: name: Build LudoFitness APK
 
 on:
   workflow_dispatch:
@@ -28,16 +28,65 @@ jobs:
             exit 1
           fi
           unzip -q "$ZIP" -d projeto
+          SETTINGS=$(find projeto -name settings.gradle.kts -print -…
+[23:21, 20/10/2026] Keh: name: Build LudoFitness APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Extrair projeto
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          mkdir projeto
+          ZIP=$(find . -maxdepth 1 -iname '*.zip' -print -quit)
+          test -n "$ZIP" || { echo "ZIP nao encontrado"; exit 1; }
+          unzip -q "$ZIP" -d projeto
           SETTINGS=$(find projeto -name settings.gradle.kts -print -quit)
-          if [ -z "$SETTINGS" ]; then
-            echo "ERRO: settings.gradle.kts nao encontrado"
-            find projeto -maxdepth 3 -type f
-            exit 1
-          fi
-          PROJECT_DIR=$(dirname "$SETTINGS")
-          echo "Projeto encontrado em: $PROJECT_DIR"
-          gradle --version
-          gradle -p "$PROJECT_DIR" assembleDebug
+          test -n "$SETTINGS" || { echo "settings.gradle.kts nao encontrado"; exit 1; }
+          echo "PROJECT_DIR=$(dirname "$SETTINGS")" >> "$GITHUB_ENV"
+
+      - name: Ajustar compatibilidade Java e Kotlin
+        run: |
+          python3 - <<'PY'
+          import os, re
+          p = os.environ["PROJECT_DIR"] + "/app/build.gradle.kts"
+          if not os.path.isfile(p):
+              raise SystemExit("Arquivo app/build.gradle.kts nao encontrado")
+          s = open(p).read()
+          block = '''
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+          '''
+          if re.search(r'(?m)^android\s*\{', s):
+              s = re.sub(r'(?m)^android\s*\{', 'android {' + block, s, count=1)
+          else:
+              raise SystemExit("Bloco android nao encontrado")
+          open(p, 'w').write(s)
+          print("Configuracao de compatibilidade adicionada")
+          PY
+
+      - name: Compilar APK
+        run: gradle -p "$PROJECT_DIR" assembleDebug
 
       - name: Disponibilizar APK
         if: success()
