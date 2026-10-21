@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar o projeto
+      - name: Baixar o repositorio
         uses: actions/checkout@v4
 
       - name: Configurar Java
@@ -17,14 +17,32 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Configurar Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Compilar APK
-        run: gradle assembleDebug
+      - name: Extrair e compilar projeto
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          mkdir -p projeto
+          ZIP=$(find . -maxdepth 1 -type f -iname '*.zip' -print -quit)
+          if [ -z "$ZIP" ]; then
+            echo "ERRO: arquivo ZIP nao encontrado"
+            exit 1
+          fi
+          unzip -q "$ZIP" -d projeto
+          SETTINGS=$(find projeto -name settings.gradle.kts -print -quit)
+          if [ -z "$SETTINGS" ]; then
+            echo "ERRO: settings.gradle.kts nao encontrado"
+            find projeto -maxdepth 3 -type f
+            exit 1
+          fi
+          PROJECT_DIR=$(dirname "$SETTINGS")
+          echo "Projeto encontrado em: $PROJECT_DIR"
+          gradle --version
+          gradle -p "$PROJECT_DIR" assembleDebug
 
       - name: Disponibilizar APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: LudoFitness-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: projeto/*/app/build/outputs/apk/debug/.apk
+          if-no-files-found: error
